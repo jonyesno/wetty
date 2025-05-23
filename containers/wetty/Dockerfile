@@ -1,5 +1,5 @@
-FROM node:current-alpine as base
-RUN apk add -U build-base python3
+FROM node:current-alpine AS base
+RUN apk add -U build-base python3 py3-setuptools
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -18,12 +18,17 @@ FROM node:current-alpine
 LABEL maintainer="butlerx@notthe.cloud"
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
-EXPOSE 3000
 COPY --from=prod-deps /usr/src/app/node_modules /usr/src/app/node_modules
 COPY --from=build /usr/src/app/build /usr/src/app/build
+
+# FIXME
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+COPY --from=base /pnpm /pnpm
+
 COPY package.json /usr/src/app
 RUN apk add -U coreutils openssh-client sshpass && \
     mkdir ~/.ssh
 
-EXPOSE 8000
+EXPOSE 3000
 CMD [ "pnpm", "start" ]
